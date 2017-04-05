@@ -27,4 +27,4 @@ Thumbs.db
 # darknet specific
 filelist.txt
 results.txt
-
+*.weights
