@@ -38,7 +38,7 @@ def runApp(out_path, list_imgs, prob_thresh = 0.2):
     os.fsync(filelist_file.fileno())
     filelist_file.close()
 
-    # run yolo binary (which writes results in a text file "results.txt")
+    # run yolo binary (the yolo binary "darknet" writes results in a text file "results.txt")
     args = ("./darknet", "detector", "test", "cfg/seat.data", "cfg/seat.cfg", "backup/seat_normals_40000.weights", filelist_filename)
     popen = subprocess.Popen(args, stdout=subprocess.PIPE)
     popen.communicate()
@@ -61,8 +61,8 @@ def runApp(out_path, list_imgs, prob_thresh = 0.2):
         imgHeight, imgWidth, imgDepth = img.shape
 
         # initialize groundtruth and detection states
-        isDefect = False
-        detectedDefect = False
+        isDefect = False # groundtruth
+        detectedDefect = False # prediction
 
         # read labels
         labelPath = os.path.join(os.path.dirname(os.path.dirname(filenameAP)), 'labels')

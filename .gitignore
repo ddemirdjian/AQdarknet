@@ -26,5 +26,7 @@ Icon?
 Thumbs.db
 *.swp
 
+# darknet specific
 filelist.txt
 results.txt
+backup/*
