@@ -17,6 +17,7 @@ submission/
 cfg/
 darknet
 .fuse*
+.idea/
 
 # OS Generated #
 .DS_Store*
@@ -24,3 +25,6 @@ ehthumbs.db
 Icon?
 Thumbs.db
 *.swp
+
+filelist.txt
+results.txt
