@@ -1,0 +1,6 @@
+classes= 1
+train  = /mnt/data/seat/seatset2_yolo_normals_1055b/seat_train.txt
+valid  = /mnt/data/seat/seatset2_yolo_normals_1055b/seat_test.txt
+names = data/seat.names
+backup = backup_normalsb
+
