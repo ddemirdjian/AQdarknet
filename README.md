@@ -1,9 +1,10 @@
-!! Build
+** Build
 
 From main folder, run:
 > make
 
-!! Run test
+** Run test
+
 To run it, call (from inside the AQdarknet folder), the following command:  
 
 > ./darknet detector test cfg/seat.data cfg/seat.cfg backup/seat_normals_40000.weights [FILELIST.TXT]
