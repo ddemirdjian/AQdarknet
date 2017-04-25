@@ -1,12 +1,37 @@
 ** Build
 
-From main folder, run:
+From main folder, edit Makefile (if necessary) and run:
 > make
 
-** Run test
+** Convert seat data
+(from inside the AQdarknet root folder)
 
-To run it, call (from inside the AQdarknet folder), the following command:  
+Modify variables from 'scripts/seat/convert2yoloRT.py' 
+- seatDBSource: folder containing the rendered seats
+- indexSource: folder containing the train.txt and test.txt files (containing the list of training and testing data/folders)
+- dbRoot: basename of destination folders (containing the converted training and testing data)
 
+Run scripts/seat/convert2yoloRT.py
+> python scripts/seat/convert2yoloRT.py
+
+
+** Train network 
+(from inside the AQdarknet root folder)
+Modify cfg/seat.data to set the location of the destination folders (with basename dbRoot, modified above) containing the converted training and testing data)
+
+Run training script
+> source scripts/train_seat.sh
+
+This will save models in the backup folder.
+
+** Run test on testing dataset
+
+To run it, call (from inside the AQdarknet root folder), the following command:  
+> python scripts/seat/test.py
+
+** Miscellaneous
+
+Run individual tests by calling (from inside the AQdarknet root folder), the following command:
 > ./darknet detector test cfg/seat.data cfg/seat.cfg backup/seat_normals_40000.weights [FILELIST.TXT]
 
 where [FILELIST.TXT] is a text file where each line corresponds to an image to test
