@@ -26,7 +26,10 @@ This will save models in the backup folder.
 
 ** Run test on testing dataset
 
-To run it, call (from inside the AQdarknet root folder), the following command:  
+Modify cripts/seat/test.py script
+- DARKNET_DIR: location of darknet folder
+- seat_path: location of the converted testing set (with basename dbRoot)
+To run it, call:
 > python scripts/seat/test.py
 
 ** Miscellaneous
