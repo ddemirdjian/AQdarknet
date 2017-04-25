@@ -55,7 +55,7 @@ def processFolder(labelFilename, imgFolder, id):
     return id - idStart
 
 def writeImgPath(filename, folder, trainIndices, fileExtension):
-    file = open(os.path.join(traintestDir, filename), 'w')
+    file = open(os.path.join(dbRoot, filename), 'w')
     for idx in trainIndices:
         file.write('%s\n' % os.path.join(folder, '{:06d}'.format(idx) + '.' + fileExtension))
 
@@ -71,29 +71,32 @@ def createIndicesFromMapList(indexMapList):
 if __name__ == '__main__':
 
     # source folder
-    seatDBSource = '/mnt/data/seat/seatset2v2_1055'
+    seatDBSource = '/data/seat/seatset2v2_1055'
 
     # dst folder
-    dbRoot = '/mnt/data/seat/seatset2_yolo_color_1055b'
-    imgFolderName = 'normals1'
     trainTestSplit = 0.9
-    # imgFolderName = 'color0'
+    dbRoot = '/home/david/data/seat/seatset2v2_1055_normals'
+    imgFolderName = 'normals1'
+    #imgFolderName = 'color0'
     dstImgFolder = os.path.join(dbRoot, 'JPEGImages')
     dstLabelFolder = os.path.join(dbRoot, 'labels')
 
     # create folders
+    print 'Creating folders'
     if not os.path.exists(dstImgFolder):
         os.makedirs(dstImgFolder)
     if not os.path.exists(dstLabelFolder):
         os.makedirs(dstLabelFolder)
 
     # parse all folder inside seatDBSource
+    print 'Reading folder'
     id = 0
     indexMap = []
     dirs = next(os.walk(seatDBSource))[1]
     for dir in dirs:
-        normalsFolder = os.path.join(seatDBSource,  dir, imgFolderName)
+        normalsFolder = os.path.join(seatDBSource,  dir, dir, imgFolderName)
         labelFilename = os.path.join(normalsFolder, 'labels.txt')
+	print 'processing: ' +  normalsFolder
         numLabelProcessed = processFolder(labelFilename, normalsFolder, id)
         if numLabelProcessed > 0:
             indexMap.append([id, numLabelProcessed])

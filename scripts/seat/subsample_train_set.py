@@ -16,10 +16,8 @@ def readLabelFilenames(train_filename, dbRoot):
 
 if __name__ == '__main__':
     dbRoot = '/mnt/data/seat/seatset2_yolo_color_1055b'
-    # dbRoot = '/mnt/data/seat/seat_unseen_color'
-    # imgFolderName = 'normals1'
-    imgFolderName = 'color0'
-    traintestDir = dbRoot
+    imgFolderName = 'normals1'
+    #imgFolderName = 'color0'
 
     # read train files
     label_filenames, img_filenames = readLabelFilenames('seat_train.txt', dbRoot)

@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 import os, sys, glob, subprocess, shutil, csv, time
 
-DARKNET_DIR = "/mnt/dev/AQdarknet"
+DARKNET_DIR = "/home/david/dev/AQDarknet"
 LABEL_NAMES = ['']
 
 # draw bounding box in image
@@ -39,7 +39,8 @@ def runApp(out_path, list_imgs, prob_thresh = 0.2):
     filelist_file.close()
 
     # run yolo binary (the yolo binary "darknet" writes results in a text file "results.txt")
-    args = ("./darknet", "detector", "test", "cfg/seat.data", "cfg/seat.cfg", "backup/seat_normals_40000.weights", filelist_filename)
+    print "Running detector on images..."
+    args = ("./darknet", "detector", "test", "cfg/seat.data", "cfg/seat.cfg", "-thresh", str(prob_thresh), "backup/seat_40000.weights", filelist_filename)
     popen = subprocess.Popen(args, stdout=subprocess.PIPE)
     popen.communicate()
 
@@ -75,8 +76,10 @@ def runApp(out_path, list_imgs, prob_thresh = 0.2):
         for label in labels:
             isDefect = True
             # draw box
-            pt1 = (int(float(label[1]) * float(imgWidth)), int(float(label[2]) * float(imgHeight)))
-            pt2 = (pt1[0] + int(float(label[3]) * float(imgWidth)), pt1[1] + int(float(label[4]) * float(imgHeight)))
+            xc, yc = float(label[1]), float(label[2])
+            winWidth, winHeight = float(label[3]), float(label[4])
+            pt1 = (int((xc - winWidth/2) * float(imgWidth)), int((yc - winHeight/2) * float(imgHeight)))
+            pt2 = (int((xc + winWidth/2) * float(imgWidth)), int((yc + winHeight/2) * float(imgHeight)))
             tag = LABEL_NAMES[int(label[0])]
             drawBox(img, tag, pt1, pt2, boxColor)
 
@@ -87,8 +90,10 @@ def runApp(out_path, list_imgs, prob_thresh = 0.2):
                 detectedDefect = True
                 x1, y1 = int(label[2]), int(label[3])
                 x2, y2 = int(label[4]), int(label[5])
-                pt1 = (x1 + (x2-x1)/2, y1 + (y2-y1)/2)
-                pt2 = (x2 + (x2-x1)/2, y2 + (y2-y1)/2)
+                pt1 = (x1, y1)
+                pt2 = (x2, y2)
+                #pt1 = (x1 + (x2-x1)/2, y1 + (y2-y1)/2)
+                #pt2 = (x2 + (x2-x1)/2, y2 + (y2-y1)/2)
                 tag = LABEL_NAMES[int(label[1])]
                 drawBox(img, tag, pt1, pt2, boxColorDetection, prob)
 
@@ -109,7 +114,9 @@ def runApp(out_path, list_imgs, prob_thresh = 0.2):
 
         # save image
         if isDefect or detectedDefect:
-            imgFilenameOut = os.path.join(out_path, '{:06d}'.format(idOut) + '.jpg')
+            #basename = '{:06d}'.format(idOut) 
+            basename = os.path.splitext(os.path.split(filenameAP)[1])[0]
+            imgFilenameOut = os.path.join(out_path, basename + '.jpg')
             cv2.imwrite(imgFilenameOut, img)
         # print 'FP rate = ' + str((100 * FP) / (FP + TN))
         # print 'Precision = ' + str((100 * TP) / (TP + FP))
@@ -126,10 +133,9 @@ if __name__ == "__main__":
     show = 0
 
     # run detection
-    seat_path = '/mnt/data/seat/seatset2_yolo_normals_1055b'
-    # seat_path = '/mnt/data/seat/seatset2_yolo_color_1055b'
+    seat_path = '/home/david/data/seat/seat4n_test'
     im_defect_path = seat_path + '/seat_test.txt'
-    outPathDefect = seat_path + '/result/defect'
+    outPathDefect = seat_path + '/result'
 
     # read images in folder
     listDefectImgs = [line.rstrip('\n') for line in open(im_defect_path)]
