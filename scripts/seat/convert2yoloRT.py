@@ -162,9 +162,9 @@ if __name__ == '__main__':
 
     # source folder
     #lindexSource = '/home/david/dev/NitrogenApps/nitrogen/apps/multicamscan/datasetLists/'
-    seatType = 'S4_XLT_FG_N200'
+    # seatType = 'S4_XLT_FG_N200'
     # seatType = 'S4_LL_LB_N200'
-    # seatType = 'S4_LL_LB-XLT_FG_N400'
+    seatType = 'S4_LL_LB-XLT_FG_N400'
     seatDBSource = '/data/seat/rendering/' + seatType
     indexSource = '/data/seat/rawdata/seatset4/Lists/Snapshot/05_02_2017/' + seatType
     if set == 'train':
