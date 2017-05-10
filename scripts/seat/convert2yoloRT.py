@@ -57,9 +57,8 @@ def generateVOCXML(xmlFilename, subDirname, imgFilename, imgWidth, imgHeight, im
     tree = et.ElementTree(root)
     tree.write(xmlFilename, pretty_print=True, xml_declaration=True)
 
-# convert images from a seat folder to yolo format
-# - copy images and creates label files
-def processFolder(labelFilename, imgFolder, id, xmlMode):
+# convert label data of a seat folder to yolo format
+def processFolder(labelFilename, imgFolder, id, xmlMode, set):
     idStart = id
 
     # read labels.txt file
@@ -82,17 +81,23 @@ def processFolder(labelFilename, imgFolder, id, xmlMode):
             # --- read labels
             bboxList = []
             for k in range(numLabels):
-                # set quality
+
+                # read label
                 defectQuality = int(label[5 + 6 * k])
                 defectType = int(label[6 + 6 * k])
                 x, y = float(label[1 + 6 * k]) / imgWidth, float(label[2 + 6 * k]) / imgHeight
                 w, h = float(label[3 + 6 * k]) / imgWidth, float(label[4 + 6 * k]) / imgHeight
                 x = x + w/2
                 y = y + h/2
+
                 # add label only if normalized coordinates are in image, and quality > 0
                 if (x-w/2 > 0 and x+w/2 < 1 and y-h/2 > 0 and y+h/2 < 1 and defectQuality > 0):
                     tag = 0
                     bboxList.append([tag, x, y, w, h])
+                    # if Q2 defect, double box in training set (defect will weight more in total loss function of network)
+                    if defectQuality == 2 and set == 'train':
+                        bboxList.append([tag, x, y, w, h])
+
             numUsableLabels = len(bboxList)
 
             # -- create a label file and save it to labels folder (same level as image JPEG folder)
@@ -101,11 +106,11 @@ def processFolder(labelFilename, imgFolder, id, xmlMode):
             dstFilename = labelBasename + fileExtension
             labelFile = open(os.path.join(dstLabelFolder, labelBasename + '.txt'), 'w')
             if xmlMode:
-               # create xml file 
-               generateVOCXML(labelFile, imgFolder, dstFilename, imgWidth, imgHeight, imgDepth, bboxList)
+                # create xml file
+                generateVOCXML(labelFile, imgFolder, dstFilename, imgWidth, imgHeight, imgDepth, bboxList)
             else:
-	       # create simple text file
-               for k in range(numUsableLabels):
+	            # create simple text file
+                for k in range(numUsableLabels):
                   labelFile.write('%d %f %f %f %f\n' % (int(bboxList[k][0]),
                                                       bboxList[k][1], bboxList[k][2],
                                                       bboxList[k][3], bboxList[k][4]))
@@ -135,12 +140,6 @@ def writeImgXMLPath(filename, imgFolder, xmlFolder, trainIndices, imgFilenameLis
         print tagFilenameList[idx]
         file.write('%s %s\n' % (os.path.join(imgFolder, imgFilenameList[idx]), os.path.join(xmlFolder, tagFilenameList[idx])))
 
-#def writeImgPath(filename, imgFolder, trainIndices, fileExtension):
-#    file = open(os.path.join(dbRoot, filename), 'w')
-#    for idx in trainIndices:
-#        basename = '{:06d}'.format(idx)
-#        file.write('%s\n' % os.path.join(imgFolder, basename + '.' + fileExtension))
-
 def writeImgPath(filename, imgFolder, trainIndices, filenameList):
     file = open(os.path.join(dbRoot, filename), 'w')
     for idx in trainIndices:
@@ -162,18 +161,21 @@ if __name__ == '__main__':
   for set in ['train','test']:
 
     # source folder
-    #seatDBSource = '/data/seat/seatset4_v3_LL_LB/normalrender' # '/data/seat/seatset2v2_1055'
-    seatDBSource = '/data/seat/rend' 
     #lindexSource = '/home/david/dev/NitrogenApps/nitrogen/apps/multicamscan/datasetLists/'
-    indexSource = '/data/seat/seatset4_v3_LL_LB/'
+    seatType = 'S4_XLT_FG_N200'
+    # seatType = 'S4_LL_LB_N200'
+    # seatType = 'S4_LL_LB-XLT_FG_N400'
+    seatDBSource = '/data/seat/rendering/' + seatType
+    indexSource = '/data/seat/rawdata/seatset4/Lists/Snapshot/05_02_2017/' + seatType
     if set == 'train':
-	indexSource = indexSource + 'train.txt' #'scansAvailableTrain.txt'
+	    indexSource = indexSource + '/train80.txt'
     else:
-	indexSource = indexSource + 'test.txt' #'scansAvailableTest.txt'
+	    indexSource = indexSource + '/test20.txt'
 
     # dst folder
     xmlMode = False
-    dbRoot = '/home/david/data/seat/seat4n_' + set
+    # dbRoot = r"/home/david/data/seat/seat4_200_" + set
+    dbRoot = r"/home/david/data/seat/seat_" + seatType + set
     indexFilename = 'seat_' + set + '.txt'
     imgFolderName = 'normals1'
     #imgFolderName = 'color0'
@@ -198,8 +200,10 @@ if __name__ == '__main__':
     for dir in dirs:
         normalsFolder = os.path.join(seatDBSource,  dir, imgFolderName)
         labelFilename = os.path.join(normalsFolder, 'labels.txt')
-	print 'processing: ' +  normalsFolder
-        numLabelProcessed, dstFilenameList, tagFilenameList = processFolder(labelFilename, normalsFolder, id, xmlMode)
+	    print 'processing: ' +  normalsFolder
+
+        # process seat
+        numLabelProcessed, dstFilenameList, tagFilenameList = processFolder(labelFilename, normalsFolder, id, xmlMode, set)
         if numLabelProcessed > 0:
             indexMap.append([id, numLabelProcessed])
             id = id + numLabelProcessed
@@ -211,11 +215,12 @@ if __name__ == '__main__':
     random.shuffle(indexMap)
     trainIndices = createIndicesFromMapList(indexMap)
 
-    if imgFolderName == 'color0':
-        fileExtension = 'jpg'
-    else:
-        fileExtension = 'png'
-   
+    # if imgFolderName == 'color0':
+    #     fileExtension = 'jpg'
+    # else:
+    #     fileExtension = 'png'
+
+   # write label data in yolo/ssd format
     if xmlMode:
        writeImgXMLPath(indexFilename, dstImgFolder, dstLabelFolder, trainIndices, dstFilenameFullList, tagFilenameFullList)
     else: 

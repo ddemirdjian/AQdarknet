@@ -22,8 +22,32 @@ def drawBox(img, text, pt1, pt2, boxColor, prob = -1):
         text = text + str(round(float(prob), 2))
     cv2.putText(img, text, label_top_left, font, font_size, boxColor, thickness)
 
+# compute intersection-over-union (iou) of two windows
+def bb_iou(boxA, boxB):
+    # determine the (x, y)-coordinates of the intersection rectangle
+    xA = max(boxA[0], boxB[0])
+    yA = max(boxA[1], boxB[1])
+    xB = min(boxA[2], boxB[2])
+    yB = min(boxA[3], boxB[3])
+
+    # compute the area of intersection rectangle
+    interArea = (xB - xA + 1) * (yB - yA + 1)
+
+    # compute the area of both the prediction and ground-truth
+    # rectangles
+    boxAArea = (boxA[2] - boxA[0] + 1) * (boxA[3] - boxA[1] + 1)
+    boxBArea = (boxB[2] - boxB[0] + 1) * (boxB[3] - boxB[1] + 1)
+
+    # compute the intersection over union by taking the intersection
+    # area and dividing it by the sum of prediction + ground-truth
+    # areas - the interesection area
+    iou = interArea / float(boxAArea + boxBArea - interArea)
+
+    # return the intersection over union value
+    return iou
+
 # call app
-def runApp(out_path, list_imgs, prob_thresh = 0.2):
+def runApp(out_path, list_imgs, seqId, prob_thresh = 0.2):
 
     # cd darknet folder
     owd = os.getcwd()
@@ -40,16 +64,17 @@ def runApp(out_path, list_imgs, prob_thresh = 0.2):
 
     # run yolo binary (the yolo binary "darknet" writes results in a text file "results.txt")
     print "Running detector on images..."
-    args = ("./darknet", "detector", "test", "cfg/seat.data", "cfg/seat.cfg", "-thresh", str(prob_thresh), "backup/seat_40000.weights", filelist_filename)
+    args = ("./darknet", "detector", "test", "cfg/seat.data", "cfg/seat.cfg", "-thresh", str(prob_thresh), "backup/seat_" + str(seqId) + ".weights", filelist_filename, "-output", "/home/david/tmp/results.txt")
     popen = subprocess.Popen(args, stdout=subprocess.PIPE)
     popen.communicate()
 
     # read results
-    with open("results.txt") as labelFile:
+    with open("/home/david/tmp/results.txt") as labelFile:
         labelsDetectedList = list(csv.reader(labelFile, delimiter=' '))
 
     # process all results (compute TP, FP, etc.. and generate images with bounding boxes)
-    TN = FP = TP = FN = 0
+    iouList = []
+    TN = FP = TP = FN = 0.0
     i = 0
     idOut = 0
     boxColorDetection = (0, 255, 0)
@@ -71,7 +96,7 @@ def runApp(out_path, list_imgs, prob_thresh = 0.2):
         with open(labelFilename) as labelFile:
             labels = list(csv.reader(labelFile, delimiter=' '))
 
-        # draw labels
+        # draw gt labels
         boxColor = (0, 0, 255)
         for label in labels:
             isDefect = True
@@ -83,6 +108,19 @@ def runApp(out_path, list_imgs, prob_thresh = 0.2):
             tag = LABEL_NAMES[int(label[0])]
             drawBox(img, tag, pt1, pt2, boxColor)
 
+            # check for matching detections, update iou
+            for labelIdx in range(len(labelsDetected)/6):
+                label = labelsDetected[labelIdx * 6 : labelIdx * 6 + 6]
+                prob = float(label[0])
+                if prob >= prob_thresh:
+                    x1, y1 = int(label[2]), int(label[3])
+                    x2, y2 = int(label[4]), int(label[5])
+                    iou = bb_iou((x1, y1, x2, y2), (pt1[0], pt1[1], pt2[0], pt2[1]))
+                    if iou > 0:
+                        iouList.append(iou)
+
+
+    # draw detected labels
         for labelIdx in range(len(labelsDetected)/6):
             label = labelsDetected[labelIdx * 6 : labelIdx * 6 + 6]
             prob = float(label[0])
@@ -92,10 +130,10 @@ def runApp(out_path, list_imgs, prob_thresh = 0.2):
                 x2, y2 = int(label[4]), int(label[5])
                 pt1 = (x1, y1)
                 pt2 = (x2, y2)
-                #pt1 = (x1 + (x2-x1)/2, y1 + (y2-y1)/2)
-                #pt2 = (x2 + (x2-x1)/2, y2 + (y2-y1)/2)
                 tag = LABEL_NAMES[int(label[1])]
                 drawBox(img, tag, pt1, pt2, boxColorDetection, prob)
+
+
 
         if not isDefect:
             if not detectedDefect:
@@ -126,15 +164,16 @@ def runApp(out_path, list_imgs, prob_thresh = 0.2):
 
     # move back to initial folder
     os.chdir(owd)
-    return TP, FP, TN, FN
+    return TP, FP, TN, FN, iouList
 
 
 if __name__ == "__main__":
     show = 0
 
     # run detection
-    seat_path = '/home/david/data/seat/seat4n_test'
-    im_defect_path = seat_path + '/seat_test.txt'
+    dataset_type = 'test'
+    seat_path = '/home/david/data/seat/seat4_285n_q2_' + dataset_type
+    im_defect_path = seat_path + '/seat_' + dataset_type + '.txt'
     outPathDefect = seat_path + '/result'
 
     # read images in folder
@@ -146,8 +185,12 @@ if __name__ == "__main__":
         os.makedirs(outPathDefect)
 
     # process all images in folder
-    TP, FP, TN, FN = runApp(outPathDefect, listDefectImgs)
+    TP, FP, TN, FN, iouList = runApp(outPathDefect, listDefectImgs, int(sys.argv[1]), 0.2)
 
-    # 0.63 TP, 0.31 FP
-    print 'Precision = ' + str((100 * TP) / (TP + FP))
-    print 'Recall = ' + str((100 * TP) / (TP + FN))
+    # diplay results
+    print 'Num gt defects = ' + str(TP + FN)
+    print 'Num detected defects = ' + str(TP + FP)
+    print 'Precision = ' + str((TP) / (TP + FP))
+    print 'Recall = ' + str((TP) / (TP + FN))
+    iouMean = sum(iouList) / len(iouList)
+    print 'IOU = ' + str(iouMean)

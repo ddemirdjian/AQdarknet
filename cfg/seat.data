@@ -1,6 +1,6 @@
 classes= 1
-train  = /home/david/data/seat/seat4n_train/seat_train.txt
-valid  = /home/david/data/seat/seat4n_test/seat_test.txt
+train  = /home/david/data/seat/seat4_XLT200_train/seat_train.txt
+valid  = /home/david/data/seat/seat4_XLT200_test/seat_test.txt
 names = data/seat.names
-backup = backup
+backup = backupXLT
 
