@@ -163,10 +163,10 @@ if __name__ == '__main__':
     # source folder
     #lindexSource = '/home/david/dev/NitrogenApps/nitrogen/apps/multicamscan/datasetLists/'
     # seatType = 'S4_XLT_FG_N200'
-    # seatType = 'S4_LL_LB_N200'
-    seatType = 'S4_LL_LB-XLT_FG_N400'
-    seatDBSource = '/data/seat/rendering/' + seatType
-    indexSource = '/data/seat/rawdata/seatset4/Lists/Snapshot/05_02_2017/' + seatType
+    seatType = 'S4_LL_LB_N200'
+    # seatType = 'S4_LL_LB-XLT_FG_N400'
+    seatDBSource = '/data/ssds/dd/rendering/' + seatType
+    indexSource = '/data/hdds/seat/lists/' + seatType
     if set == 'train':
 	    indexSource = indexSource + '/train80.txt'
     else:
@@ -175,7 +175,7 @@ if __name__ == '__main__':
     # dst folder
     xmlMode = False
     # dbRoot = r"/home/david/data/seat/seat4_200_" + set
-    dbRoot = r"/home/david/data/seat/seat_" + seatType + set
+    dbRoot = r"/data/ssds/dd/data/seat/seat_" + seatType + set
     indexFilename = 'seat_' + set + '.txt'
     imgFolderName = 'normals1'
     #imgFolderName = 'color0'
@@ -200,10 +200,12 @@ if __name__ == '__main__':
     for dir in dirs:
         normalsFolder = os.path.join(seatDBSource,  dir, imgFolderName)
         labelFilename = os.path.join(normalsFolder, 'labels.txt')
-	    print 'processing: ' +  normalsFolder
+        print 'processing: ' +  normalsFolder
 
         # process seat
-        numLabelProcessed, dstFilenameList, tagFilenameList = processFolder(labelFilename, normalsFolder, id, xmlMode, set)
+        numLabelProcessed, dstFilenameList, tagFilenameList = \
+            processFolder(labelFilename, normalsFolder, id, xmlMode, set)
+        # processFolder(labelFilename, normalsFolder, id, xmlMode, '')
         if numLabelProcessed > 0:
             indexMap.append([id, numLabelProcessed])
             id = id + numLabelProcessed

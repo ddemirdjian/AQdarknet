@@ -1,6 +1,6 @@
 GPU=1
 CUDNN=1
-OPENCV=1
+OPENCV=0
 DEBUG=0
 
 ARCH= -gencode arch=compute_30,code=sm_30 \
@@ -32,6 +32,7 @@ CFLAGS+=$(OPTS)
 ifeq ($(OPENCV), 1) 
 COMMON+= -DOPENCV
 CFLAGS+= -DOPENCV
+CFLAGS+= -DPKG_CONFIG_PATH=/home/dd/git/Nitrogen/deps/generated/opencv/linux/x86_64/lib/pkgconfig/
 LDFLAGS+= `pkg-config --libs opencv` 
 COMMON+= `pkg-config --cflags opencv` 
 endif

@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 import os, sys, glob, subprocess, shutil, csv, time
 
-DARKNET_DIR = "/home/david/dev/AQDarknet"
+DARKNET_DIR = "/home/dd/git/AQDarknet"
 LABEL_NAMES = ['']
 
 # draw bounding box in image
@@ -64,12 +64,15 @@ def runApp(out_path, list_imgs, seqId, prob_thresh = 0.2):
 
     # run yolo binary (the yolo binary "darknet" writes results in a text file "results.txt")
     print "Running detector on images..."
-    args = ("./darknet", "detector", "test", "cfg/seat.data", "cfg/seat.cfg", "-thresh", str(prob_thresh), "backup/seat_" + str(seqId) + ".weights", filelist_filename, "-output", "/home/david/tmp/results.txt")
+    args = ("./darknet", "detector", "test", "cfg/seat.data", "cfg/seat.cfg",
+            "-thresh", str(prob_thresh),
+            "backup3/seat_" + str(seqId) + ".weights", filelist_filename,
+            "-output", "/home/dd/tmp/results.txt")
     popen = subprocess.Popen(args, stdout=subprocess.PIPE)
     popen.communicate()
 
     # read results
-    with open("/home/david/tmp/results.txt") as labelFile:
+    with open("/home/dd/tmp/results.txt") as labelFile:
         labelsDetectedList = list(csv.reader(labelFile, delimiter=' '))
 
     # process all results (compute TP, FP, etc.. and generate images with bounding boxes)
@@ -170,9 +173,13 @@ def runApp(out_path, list_imgs, seqId, prob_thresh = 0.2):
 if __name__ == "__main__":
     show = 0
 
+    # seatType = 'S4_XLT_FG_N200'
+    seatType = 'S4_LL_LB_N200'
+    # seatType = 'S4_LL_LB-XLT_FG_N400'
+
     # run detection
     dataset_type = 'test'
-    seat_path = '/home/david/data/seat/seat4_285n_q2_' + dataset_type
+    seat_path = r"/data/ssds/dd/data/seat/seat_" + seatType + dataset_type
     im_defect_path = seat_path + '/seat_' + dataset_type + '.txt'
     outPathDefect = seat_path + '/result'
 
